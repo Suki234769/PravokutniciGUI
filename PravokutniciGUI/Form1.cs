@@ -8,7 +8,9 @@ namespace PravokutniciGUI
 {
     public partial class Form1 : Form
     {
-        private readonly List<Rectangle> _rectangles = new List<Rectangle>();
+        // LISTA pravokutnika + njihova boja (tuple)
+        private readonly List<(Rectangle rect, Color color)> _rectangles
+            = new List<(Rectangle rect, Color color)>();
 
         private bool _isDrawing = false;
         private Point _startPoint;
@@ -17,6 +19,8 @@ namespace PravokutniciGUI
 
         private Label lblTotalArea;
 
+        // Generator slučajnih boja
+        private readonly Random _rand = new Random();
         public Form1()
         {
             InitializeComponent();
@@ -56,7 +60,7 @@ namespace PravokutniciGUI
             {
                 for (int i = _rectangles.Count - 1; i >= 0; i--)
                 {
-                    if (_rectangles[i].Contains(e.Location))
+                    if (_rectangles[i].rect.Contains(e.Location))
                     {
                         _rectangles.RemoveAt(i);
                         UpdateTotalAreaLabel();
@@ -93,7 +97,22 @@ namespace PravokutniciGUI
             Rectangle finalRect = MakeNormalizedRectangle(_startPoint, e.Location);
 
             if (finalRect.Width > 2 && finalRect.Height > 2)
-                _rectangles.Add(finalRect);
+            {
+                
+                // GENERIRAJ SLUČAJNU BOJU
+                
+                Color randomColor = Color.FromArgb(
+                    120,                       // prozirnost
+                    _rand.Next(50, 256),
+                    _rand.Next(50, 256),
+                    _rand.Next(50, 256));
+
+                _rectangles.Add((finalRect, randomColor));
+            }
+
+
+
+            
 
             _previewRect = Rectangle.Empty;
 
@@ -103,13 +122,16 @@ namespace PravokutniciGUI
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            using (var pen = new Pen(Color.DodgerBlue, 2))
-            using (var fill = new SolidBrush(Color.FromArgb(40, Color.DodgerBlue)))
+            
+            // CRTANJE svih pravokutnika
+            
+            foreach (var item in _rectangles)
             {
-                foreach (var r in _rectangles)
+                using (var fill = new SolidBrush(item.color))
+                using (var pen = new Pen(Color.Black, 2))
                 {
-                    e.Graphics.FillRectangle(fill, r);
-                    e.Graphics.DrawRectangle(pen, r);
+                    e.Graphics.FillRectangle(fill, item.rect);
+                    e.Graphics.DrawRectangle(pen, item.rect);
                 }
             }
 
@@ -125,7 +147,7 @@ namespace PravokutniciGUI
 
         private void UpdateTotalAreaLabel()
         {
-            long totalArea = _rectangles.Sum(r => (long)r.Width * r.Height);
+            long totalArea = _rectangles.Sum(r => (long)r.rect.Width * r.rect.Height);
             lblTotalArea.Text = $"Ukupna površina: {totalArea} px²   |   Broj pravokutnika: {_rectangles.Count}";
         }
 
