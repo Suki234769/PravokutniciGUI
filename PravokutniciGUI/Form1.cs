@@ -51,6 +51,22 @@ namespace PravokutniciGUI
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
+            //  DESNI KLIK → brisanje pravokutnika
+            if (e.Button == MouseButtons.Right)
+            {
+                for (int i = _rectangles.Count - 1; i >= 0; i--)
+                {
+                    if (_rectangles[i].Contains(e.Location))
+                    {
+                        _rectangles.RemoveAt(i);
+                        UpdateTotalAreaLabel();
+                        Invalidate();
+                        break;
+                    }
+                }
+                return;
+            }
+
             if (e.Button != MouseButtons.Left) return;
 
             _isDrawing = true;
