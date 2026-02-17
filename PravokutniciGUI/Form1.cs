@@ -8,9 +8,9 @@ namespace PravokutniciGUI
 {
     public partial class Form1 : Form
     {
-        // LISTA pravokutnika + njihova boja (tuple)
-        private readonly List<(Rectangle rect, Color color)> _rectangles
-            = new List<(Rectangle rect, Color color)>();
+        // UTORAK – lista sada koristi RectangleItem model (za JSON i proširenja)
+        private readonly List<RectangleItem> _rectangles
+            = new List<RectangleItem>();
 
         private bool _isDrawing = false;
         private Point _startPoint;
@@ -60,7 +60,7 @@ namespace PravokutniciGUI
             {
                 for (int i = _rectangles.Count - 1; i >= 0; i--)
                 {
-                    if (_rectangles[i].rect.Contains(e.Location))
+                    if (_rectangles[i].ToRectangle().Contains(e.Location))
                     {
                         _rectangles.RemoveAt(i);
                         UpdateTotalAreaLabel();
@@ -107,12 +107,13 @@ namespace PravokutniciGUI
                     _rand.Next(50, 256),
                     _rand.Next(50, 256));
 
-                _rectangles.Add((finalRect, randomColor));
+                // UTORAK – dodavanje preko RectangleItem modela
+                _rectangles.Add(RectangleItem.From(finalRect, randomColor));
             }
 
 
 
-            
+
 
             _previewRect = Rectangle.Empty;
 
@@ -122,16 +123,16 @@ namespace PravokutniciGUI
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            
+
             // CRTANJE svih pravokutnika
-            
+            // UTORAK – koristi RectangleItem metode (ToRectangle, ToColor)
             foreach (var item in _rectangles)
             {
-                using (var fill = new SolidBrush(item.color))
+                using (var fill = new SolidBrush(item.ToColor()))
                 using (var pen = new Pen(Color.Black, 2))
                 {
-                    e.Graphics.FillRectangle(fill, item.rect);
-                    e.Graphics.DrawRectangle(pen, item.rect);
+                    e.Graphics.FillRectangle(fill, item.ToRectangle());
+                    e.Graphics.DrawRectangle(pen, item.ToRectangle());
                 }
             }
 
@@ -147,7 +148,8 @@ namespace PravokutniciGUI
 
         private void UpdateTotalAreaLabel()
         {
-            long totalArea = _rectangles.Sum(r => (long)r.rect.Width * r.rect.Height);
+            // UTORAK – površina se računa iz RectangleItem podataka
+            long totalArea = _rectangles.Sum(r => (long)r.Width * r.Height);
             lblTotalArea.Text = $"Ukupna površina: {totalArea} px²   |   Broj pravokutnika: {_rectangles.Count}";
         }
 
