@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.IO;
+using System.Text.Json;
 
 namespace PravokutniciGUI
 {
@@ -18,6 +20,9 @@ namespace PravokutniciGUI
         private Rectangle _previewRect;
 
         private Label lblTotalArea;
+
+        private Button btnSave;
+        private Button btnLoad;
 
         // Generator slučajnih boja
         private readonly Random _rand = new Random();
@@ -49,7 +54,25 @@ namespace PravokutniciGUI
                 BackColor = Color.WhiteSmoke
             };
 
+            btnSave = new Button
+            {
+                Text = "Spremi JSON",
+                Dock = DockStyle.Top,
+                Height = 35
+            };
+            btnSave.Click += BtnSave_Click;
+
+            btnLoad = new Button
+            {
+                Text = "Učitaj JSON",
+                Dock = DockStyle.Top,
+                Height = 35
+            };
+            btnLoad.Click += BtnLoad_Click;
+
             Controls.Add(lblTotalArea);
+            Controls.Add(btnLoad);
+            Controls.Add(btnSave);
             UpdateTotalAreaLabel();
         }
 
@@ -153,6 +176,45 @@ namespace PravokutniciGUI
             lblTotalArea.Text = $"Ukupna površina: {totalArea} px²   |   Broj pravokutnika: {_rectangles.Count}";
         }
 
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json",
+                FileName = "pravokutnici.json"
+            };
+
+            if (sfd.ShowDialog() != DialogResult.OK) return;
+
+            var json = JsonSerializer.Serialize(_rectangles, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            File.WriteAllText(sfd.FileName, json);
+        }
+
+        private void BtnLoad_Click(object sender, EventArgs e)
+        {
+            using var ofd = new OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json"
+            };
+
+            if (ofd.ShowDialog() != DialogResult.OK) return;
+
+            var json = File.ReadAllText(ofd.FileName);
+
+            var data = JsonSerializer.Deserialize<List<RectangleItem>>(json);
+
+            if (data != null)
+            {
+                _rectangles.Clear();
+                _rectangles.AddRange(data);
+                UpdateTotalAreaLabel();
+                Invalidate();
+            }
+        }
         private static Rectangle MakeNormalizedRectangle(Point a, Point b)
         {
             int x1 = Math.Min(a.X, b.X);
